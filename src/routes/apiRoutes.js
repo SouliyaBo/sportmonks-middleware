@@ -45,4 +45,22 @@ router.get('/team/:teamId', matchController.getTeamById);
  */
 router.get('/match/:matchId', matchController.getMatchDetail);
 
+/**
+ * Schedules by Season
+ * GET /api/schedules/season/:seasonId
+ */
+router.get('/schedules/season/:seasonId', matchController.getSchedulesBySeason);
+
+/**
+ * Schedules by Team (ซีซันปัจจุบัน)
+ * GET /api/schedules/team/:teamId
+ */
+router.get('/schedules/team/:teamId', matchController.getSchedulesByTeam);
+
+/**
+ * Schedules by Season and Team
+ * GET /api/schedules/season/:seasonId/team/:teamId
+ */
+router.get('/schedules/season/:seasonId/team/:teamId', matchController.getSchedulesBySeasonAndTeam);
+
 export default router;

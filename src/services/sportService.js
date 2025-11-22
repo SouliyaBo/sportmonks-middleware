@@ -265,3 +265,91 @@ export async function getTeamFixtures(teamId, date = null) {
     throw new Error('ไม่สามารถดึงแมตช์ของทีมได้');
   }
 }
+
+/**
+ * ดึงตารางการแข่งขันทั้งซีซัน (Schedules)
+ * @param {number} seasonId - ID ของซีซัน
+ * @returns {Promise<Array>}
+ */
+export async function getSchedulesBySeason(seasonId) {
+  const cacheKey = `schedules:season:${seasonId}`;
+
+  try {
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      console.log(`✅ Cache Hit: ${cacheKey}`);
+      return cachedData;
+    }
+
+    console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึงข้อมูลจาก SportMonks...`);
+    const response = await sportMonksAPI.get(`/schedules/seasons/${seasonId}`);
+
+    const schedules = response.data.data;
+    await setCache(cacheKey, schedules, TTL.FIXTURES);
+    console.log(`✅ Cached: ${cacheKey} (TTL: ${TTL.FIXTURES}s)`);
+
+    return schedules;
+  } catch (error) {
+    console.error('❌ Error fetching schedules by season:', error.message);
+    throw new Error('ไม่สามารถดึงตารางการแข่งขันได้');
+  }
+}
+
+/**
+ * ดึงตารางการแข่งขันของทีม (ซีซันปัจจุบัน)
+ * @param {number} teamId - ID ของทีม
+ * @returns {Promise<Array>}
+ */
+export async function getSchedulesByTeam(teamId) {
+  const cacheKey = `schedules:team:${teamId}`;
+
+  try {
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      console.log(`✅ Cache Hit: ${cacheKey}`);
+      return cachedData;
+    }
+
+    console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึงข้อมูลจาก SportMonks...`);
+    const response = await sportMonksAPI.get(`/schedules/teams/${teamId}`);
+
+    const schedules = response.data.data;
+    await setCache(cacheKey, schedules, TTL.FIXTURES);
+    console.log(`✅ Cached: ${cacheKey} (TTL: ${TTL.FIXTURES}s)`);
+
+    return schedules;
+  } catch (error) {
+    console.error('❌ Error fetching schedules by team:', error.message);
+    throw new Error('ไม่สามารถดึงตารางการแข่งขันของทีมได้');
+  }
+}
+
+/**
+ * ดึงตารางการแข่งขันของทีมในซีซันที่เลือก
+ * @param {number} seasonId - ID ของซีซัน
+ * @param {number} teamId - ID ของทีม
+ * @returns {Promise<Array>}
+ */
+export async function getSchedulesBySeasonAndTeam(seasonId, teamId) {
+  const cacheKey = `schedules:season:${seasonId}:team:${teamId}`;
+
+  try {
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      console.log(`✅ Cache Hit: ${cacheKey}`);
+      return cachedData;
+    }
+
+    console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึงข้อมูลจาก SportMonks...`);
+    const response = await sportMonksAPI.get(`/schedules/seasons/${seasonId}/teams/${teamId}`);
+
+    const schedules = response.data.data;
+    await setCache(cacheKey, schedules, TTL.FIXTURES);
+    console.log(`✅ Cached: ${cacheKey} (TTL: ${TTL.FIXTURES}s)`);
+
+    return schedules;
+  } catch (error) {
+    console.error('❌ Error fetching schedules by season and team:', error.message);
+    throw new Error('ไม่สามารถดึงตารางการแข่งขันได้');
+  }
+}

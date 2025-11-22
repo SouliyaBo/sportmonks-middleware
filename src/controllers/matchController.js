@@ -196,3 +196,96 @@ export async function healthCheck(req, res) {
     uptime: process.uptime()
   });
 }
+
+/**
+ * Controller สำหรับดึงตารางการแข่งขันทั้งซีซัน
+ * GET /api/schedules/season/:seasonId
+ */
+export async function getSchedulesBySeason(req, res) {
+  try {
+    const { seasonId } = req.params;
+
+    if (!seasonId) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุ Season ID'
+      });
+    }
+
+    const schedules = await sportService.getSchedulesBySeason(seasonId);
+
+    res.status(200).json({
+      success: true,
+      data: schedules,
+      count: Array.isArray(schedules) ? schedules.length : 0
+    });
+  } catch (error) {
+    console.error('Error in getSchedulesBySeason controller:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการดึงตารางการแข่งขัน'
+    });
+  }
+}
+
+/**
+ * Controller สำหรับดึงตารางการแข่งขันของทีม
+ * GET /api/schedules/team/:teamId
+ */
+export async function getSchedulesByTeam(req, res) {
+  try {
+    const { teamId } = req.params;
+
+    if (!teamId) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุ Team ID'
+      });
+    }
+
+    const schedules = await sportService.getSchedulesByTeam(teamId);
+
+    res.status(200).json({
+      success: true,
+      data: schedules,
+      count: Array.isArray(schedules) ? schedules.length : 0
+    });
+  } catch (error) {
+    console.error('Error in getSchedulesByTeam controller:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการดึงตารางการแข่งขัน'
+    });
+  }
+}
+
+/**
+ * Controller สำหรับดึงตารางการแข่งขันของทีมในซีซันที่เลือก
+ * GET /api/schedules/season/:seasonId/team/:teamId
+ */
+export async function getSchedulesBySeasonAndTeam(req, res) {
+  try {
+    const { seasonId, teamId } = req.params;
+
+    if (!seasonId || !teamId) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุ Season ID และ Team ID'
+      });
+    }
+
+    const schedules = await sportService.getSchedulesBySeasonAndTeam(seasonId, teamId);
+
+    res.status(200).json({
+      success: true,
+      data: schedules,
+      count: Array.isArray(schedules) ? schedules.length : 0
+    });
+  } catch (error) {
+    console.error('Error in getSchedulesBySeasonAndTeam controller:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการดึงตารางการแข่งขัน'
+    });
+  }
+}
