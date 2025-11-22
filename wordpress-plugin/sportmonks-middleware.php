@@ -196,8 +196,13 @@ class SportMonks_Middleware_Connector {
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
         
+        // Debug: บันทึก response
+        error_log('SportMonks API Response: ' . print_r($data, true));
+        error_log('SportMonks API URL: ' . $url);
+        
         if (!isset($data['success']) || !$data['success']) {
-            return array('error' => 'API returned error');
+            $error_msg = isset($data['message']) ? $data['message'] : 'API returned error';
+            return array('error' => $error_msg . ' (URL: ' . $url . ')');
         }
         
         // Cache result
