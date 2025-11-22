@@ -75,4 +75,12 @@ router.get('/leagues/:leagueId/current-season', matchController.getCurrentSeason
  */
 router.get('/schedules/league/:leagueId/current', matchController.getCurrentSeasonSchedulesByLeague);
 
+/**
+ * Get Fixtures by Date Grouped by League (แมตช์ตามวันที่ แยกตามลีก)
+ * GET /api/fixtures/date/:date (date format: YYYY-MM-DD)
+ * GET /api/fixtures/today (วันนี้)
+ */
+router.get('/fixtures/date/:date', matchController.getFixturesByDateGrouped);
+router.get('/fixtures/today', matchController.getFixturesByDateGrouped);
+
 export default router;

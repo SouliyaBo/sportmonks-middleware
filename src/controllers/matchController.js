@@ -361,3 +361,30 @@ export async function getCurrentSeasonSchedulesByLeague(req, res) {
     });
   }
 }
+
+/**
+ * Controller สำหรับดึงแมตช์ตามวันที่ และจัดกลุ่มตามลีก
+ * GET /api/fixtures/date/:date
+ * หรือ GET /api/fixtures/today (สำหรับวันนี้)
+ */
+export async function getFixturesByDateGrouped(req, res) {
+  try {
+    const { date } = req.params;
+    const dateParam = date || 'today';
+
+    const groupedFixtures = await sportService.getFixturesByDateGroupedByLeague(dateParam);
+
+    res.status(200).json({
+      success: true,
+      data: groupedFixtures,
+      totalLeagues: groupedFixtures.length,
+      totalFixtures: groupedFixtures.reduce((sum, group) => sum + group.fixtures.length, 0)
+    });
+  } catch (error) {
+    console.error('Error in getFixturesByDateGrouped controller:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลแมตช์'
+    });
+  }
+}

@@ -425,3 +425,73 @@ export async function getCurrentSeasonSchedulesByLeague(leagueId) {
     throw new Error(error.message || 'ไม่สามารถดึงตารางการแข่งขันของซีซันปัจจุบันได้');
   }
 }
+
+/**
+ * ดึงแมตช์ตามวันที่ และจัดกลุ่มตามลีก
+ * @param {string} date - วันที่ (YYYY-MM-DD) หรือ 'today'
+ * @returns {Promise<Object>}
+ */
+export async function getFixturesByDateGroupedByLeague(date = 'today') {
+  const cacheKey = `fixtures:bydate:${date}`;
+
+  try {
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      console.log(`✅ Cache Hit: ${cacheKey}`);
+      return cachedData;
+    }
+
+    console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึงข้อมูลจาก SportMonks...`);
+    
+    // ดึงข้อมูลแมตช์ทั้งหมดของวันนั้น
+    const response = await sportMonksAPI.get('/fixtures/date/' + date, {
+      params: {
+        include: 'participants;league;venue;scores;state'
+      }
+    });
+
+    const fixtures = response.data.data;
+
+    // จัดกลุ่มตามลีก
+    const groupedByLeague = {};
+    
+    fixtures.forEach(fixture => {
+      const leagueId = fixture.league?.id;
+      const leagueName = fixture.league?.name || 'อื่นๆ';
+      
+      if (!groupedByLeague[leagueId]) {
+        groupedByLeague[leagueId] = {
+          league: {
+            id: leagueId,
+            name: leagueName,
+            image_path: fixture.league?.image_path,
+            country: fixture.league?.country?.name
+          },
+          fixtures: []
+        };
+      }
+      
+      groupedByLeague[leagueId].fixtures.push(fixture);
+    });
+
+    // เรียงลำดับแมตช์ในแต่ละลีกตามเวลา
+    Object.values(groupedByLeague).forEach(group => {
+      group.fixtures.sort((a, b) => {
+        return new Date(a.starting_at) - new Date(b.starting_at);
+      });
+    });
+
+    // แปลง object เป็น array และเรียงตามจำนวนแมตช์
+    const result = Object.values(groupedByLeague).sort((a, b) => {
+      return b.fixtures.length - a.fixtures.length;
+    });
+
+    await setCache(cacheKey, result, TTL.LIVESCORES);
+    console.log(`✅ Cached: ${cacheKey} (TTL: ${TTL.LIVESCORES}s)`);
+
+    return result;
+  } catch (error) {
+    console.error('❌ Error fetching fixtures by date:', error.message);
+    throw new Error('ไม่สามารถดึงข้อมูลแมตช์ตามวันที่ได้');
+  }
+}
