@@ -432,7 +432,9 @@ export async function getCurrentSeasonSchedulesByLeague(leagueId) {
  * @returns {Promise<Object>}
  */
 export async function getFixturesByDateGroupedByLeague(date = 'today') {
-  const cacheKey = `fixtures:bydate:${date}`;
+  // แปลง 'today' เป็นวันที่จริง
+  const targetDate = date === 'today' ? new Date().toISOString().split('T')[0] : date;
+  const cacheKey = `fixtures:bydate:${targetDate}`;
 
   try {
     const cachedData = await getCache(cacheKey);
@@ -443,14 +445,10 @@ export async function getFixturesByDateGroupedByLeague(date = 'today') {
 
     console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึงข้อมูลจาก SportMonks...`);
     
-    // แปลง 'today' เป็นวันที่จริง
-    const targetDate = date === 'today' ? new Date().toISOString().split('T')[0] : date;
-    
-    // ดึงข้อมูลแมตช์ทั้งหมดของวันนั้น โดยใช้ fixtures endpoint
-    const response = await sportMonksAPI.get('/fixtures', {
+    // ใช้ fixtures/date endpoint
+    const response = await sportMonksAPI.get(`/fixtures/date/${targetDate}`, {
       params: {
-        include: 'participants;league;venue;scores;state',
-        filters: `fixtureDate:${targetDate}`
+        include: 'participants;league;venue;scores;state'
       }
     });
 
@@ -491,7 +489,7 @@ export async function getFixturesByDateGroupedByLeague(date = 'today') {
     });
 
     await setCache(cacheKey, result, TTL.LIVESCORES);
-    console.log(`✅ Cached: ${cacheKey} (TTL: ${TTL.LIVESCORES}s)`);
+    console.log(`✅ Cached: ${cacheKey} (Date: ${targetDate}, TTL: ${TTL.LIVESCORES}s)`);
 
     return result;
   } catch (error) {
