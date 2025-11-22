@@ -63,4 +63,10 @@ router.get('/schedules/team/:teamId', matchController.getSchedulesByTeam);
  */
 router.get('/schedules/season/:seasonId/team/:teamId', matchController.getSchedulesBySeasonAndTeam);
 
+/**
+ * Get Current Season by League
+ * GET /api/leagues/:leagueId/current-season
+ */
+router.get('/leagues/:leagueId/current-season', matchController.getCurrentSeasonByLeague);
+
 export default router;

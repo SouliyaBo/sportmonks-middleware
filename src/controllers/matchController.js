@@ -289,3 +289,44 @@ export async function getSchedulesBySeasonAndTeam(req, res) {
     });
   }
 }
+
+/**
+ * Controller สำหรับดึง Season ปัจจุบันของลีก
+ * GET /api/leagues/:leagueId/current-season
+ */
+export async function getCurrentSeasonByLeague(req, res) {
+  try {
+    const { leagueId } = req.params;
+
+    if (!leagueId) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุ League ID'
+      });
+    }
+
+    const leagueData = await sportService.getLeagueWithCurrentSeason(leagueId);
+
+    // SportMonks API ส่ง currentseason (ตัวพิมพ์เล็กทั้งหมด) ไม่ใช่ currentSeason
+    const currentSeason = leagueData.currentseason || leagueData.currentSeason || null;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        league: {
+          id: leagueData.id,
+          name: leagueData.name,
+          short_code: leagueData.short_code,
+          image_path: leagueData.image_path
+        },
+        currentSeason: currentSeason
+      }
+    });
+  } catch (error) {
+    console.error('Error in getCurrentSeasonByLeague controller:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการดึง Season ปัจจุบัน'
+    });
+  }
+}
