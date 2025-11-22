@@ -52,6 +52,9 @@ class SportMonks_Middleware_Connector {
         add_shortcode('league_fixtures', array($this, 'league_fixtures_shortcode'));
         add_shortcode('league_standings', array($this, 'league_standings_shortcode'));
         add_shortcode('team_fixtures', array($this, 'team_fixtures_shortcode'));
+        add_shortcode('season_schedule', array($this, 'season_schedule_shortcode'));
+        add_shortcode('team_schedule', array($this, 'team_schedule_shortcode'));
+        add_shortcode('team_season_schedule', array($this, 'team_season_schedule_shortcode'));
         
         // Widgets
         add_action('widgets_init', array($this, 'register_widgets'));
@@ -138,6 +141,18 @@ class SportMonks_Middleware_Connector {
             <h3>4. Team Fixtures</h3>
             <code>[team_fixtures team_id="1"]</code>
             <p>แสดงแมตช์ของทีม</p>
+            
+            <h3>5. Season Schedule (ตารางการแข่งขันทั้งซีซัน)</h3>
+            <code>[season_schedule season_id="23538"]</code>
+            <p>แสดงตารางการแข่งขันทั้งซีซัน</p>
+            
+            <h3>6. Team Schedule (โปรแกรมการแข่งของทีม)</h3>
+            <code>[team_schedule team_id="1"]</code>
+            <p>แสดงตารางการแข่งขันของทีม (ซีซันปัจจุบัน)</p>
+            
+            <h3>7. Team Season Schedule (ตารางแข่งของทีมในซีซันที่เลือก)</h3>
+            <code>[team_season_schedule season_id="23538" team_id="1"]</code>
+            <p>แสดงตารางการแข่งขันของทีมในซีซันที่เลือก</p>
         </div>
         <?php
     }
@@ -314,6 +329,76 @@ class SportMonks_Middleware_Connector {
         
         ob_start();
         include SMM_PLUGIN_DIR . 'templates/fixtures.php';
+        return ob_get_clean();
+    }
+    
+    /**
+     * Season Schedule Shortcode
+     */
+    public function season_schedule_shortcode($atts) {
+        $atts = shortcode_atts(array(
+            'season_id' => ''
+        ), $atts);
+        
+        if (empty($atts['season_id'])) {
+            return '<p class="smm-error">กรุณาระบุ season_id</p>';
+        }
+        
+        $data = $this->api_request('schedules/season/' . $atts['season_id']);
+        
+        if (isset($data['error'])) {
+            return '<p class="smm-error">ไม่สามารถโหลดข้อมูลได้: ' . esc_html($data['error']) . '</p>';
+        }
+        
+        ob_start();
+        include SMM_PLUGIN_DIR . 'templates/schedules.php';
+        return ob_get_clean();
+    }
+    
+    /**
+     * Team Schedule Shortcode
+     */
+    public function team_schedule_shortcode($atts) {
+        $atts = shortcode_atts(array(
+            'team_id' => ''
+        ), $atts);
+        
+        if (empty($atts['team_id'])) {
+            return '<p class="smm-error">กรุณาระบุ team_id</p>';
+        }
+        
+        $data = $this->api_request('schedules/team/' . $atts['team_id']);
+        
+        if (isset($data['error'])) {
+            return '<p class="smm-error">ไม่สามารถโหลดข้อมูลได้: ' . esc_html($data['error']) . '</p>';
+        }
+        
+        ob_start();
+        include SMM_PLUGIN_DIR . 'templates/schedules.php';
+        return ob_get_clean();
+    }
+    
+    /**
+     * Team Season Schedule Shortcode
+     */
+    public function team_season_schedule_shortcode($atts) {
+        $atts = shortcode_atts(array(
+            'season_id' => '',
+            'team_id' => ''
+        ), $atts);
+        
+        if (empty($atts['season_id']) || empty($atts['team_id'])) {
+            return '<p class="smm-error">กรุณาระบุ season_id และ team_id</p>';
+        }
+        
+        $data = $this->api_request('schedules/season/' . $atts['season_id'] . '/team/' . $atts['team_id']);
+        
+        if (isset($data['error'])) {
+            return '<p class="smm-error">ไม่สามารถโหลดข้อมูลได้: ' . esc_html($data['error']) . '</p>';
+        }
+        
+        ob_start();
+        include SMM_PLUGIN_DIR . 'templates/schedules.php';
         return ob_get_clean();
     }
     
