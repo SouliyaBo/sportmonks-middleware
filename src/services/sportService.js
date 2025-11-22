@@ -386,3 +386,42 @@ export async function getLeagueWithCurrentSeason(leagueId) {
     throw new Error('ไม่สามารถดึงข้อมูลลีกและซีซันปัจจุบันได้');
   }
 }
+
+/**
+ * ดึงตารางการแข่งขันของ Season ปัจจุบันโดยใช้ League ID
+ * @param {number} leagueId - ID ของลีก
+ * @returns {Promise<Array>}
+ */
+export async function getCurrentSeasonSchedulesByLeague(leagueId) {
+  const cacheKey = `schedules:league:${leagueId}:current`;
+
+  try {
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      console.log(`✅ Cache Hit: ${cacheKey}`);
+      return cachedData;
+    }
+
+    console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึง current season แล้วดึง schedules...`);
+    
+    // 1. ดึง current season ของลีก
+    const leagueData = await getLeagueWithCurrentSeason(leagueId);
+    const currentSeason = leagueData.currentseason || leagueData.currentSeason;
+    
+    if (!currentSeason || !currentSeason.id) {
+      throw new Error('ไม่พบซีซันปัจจุบันของลีกนี้');
+    }
+
+    // 2. ดึง schedules ของ season นั้น
+    const response = await sportMonksAPI.get(`/schedules/seasons/${currentSeason.id}`);
+    const schedules = response.data.data;
+
+    await setCache(cacheKey, schedules, TTL.FIXTURES);
+    console.log(`✅ Cached: ${cacheKey} (Season ID: ${currentSeason.id}, TTL: ${TTL.FIXTURES}s)`);
+
+    return schedules;
+  } catch (error) {
+    console.error('❌ Error fetching current season schedules:', error.message);
+    throw new Error(error.message || 'ไม่สามารถดึงตารางการแข่งขันของซีซันปัจจุบันได้');
+  }
+}

@@ -330,3 +330,34 @@ export async function getCurrentSeasonByLeague(req, res) {
     });
   }
 }
+
+/**
+ * Controller สำหรับดึง Schedules ของ Season ปัจจุบันโดยใช้ League ID
+ * GET /api/schedules/league/:leagueId/current
+ */
+export async function getCurrentSeasonSchedulesByLeague(req, res) {
+  try {
+    const { leagueId } = req.params;
+
+    if (!leagueId) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุ League ID'
+      });
+    }
+
+    const schedules = await sportService.getCurrentSeasonSchedulesByLeague(leagueId);
+
+    res.status(200).json({
+      success: true,
+      data: schedules,
+      count: Array.isArray(schedules) ? schedules.length : 0
+    });
+  } catch (error) {
+    console.error('Error in getCurrentSeasonSchedulesByLeague controller:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการดึงตารางการแข่งขันของซีซันปัจจุบัน'
+    });
+  }
+}

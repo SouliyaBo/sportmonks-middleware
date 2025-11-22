@@ -69,4 +69,10 @@ router.get('/schedules/season/:seasonId/team/:teamId', matchController.getSchedu
  */
 router.get('/leagues/:leagueId/current-season', matchController.getCurrentSeasonByLeague);
 
+/**
+ * Get Current Season Schedules by League (ตารางการแข่งขันของซีซันปัจจุบัน)
+ * GET /api/schedules/league/:leagueId/current
+ */
+router.get('/schedules/league/:leagueId/current', matchController.getCurrentSeasonSchedulesByLeague);
+
 export default router;
