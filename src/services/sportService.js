@@ -89,19 +89,21 @@ export async function getFixturesByLeague(leagueId, season = null) {
 
     console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึงข้อมูลจาก SportMonks...`);
     
-    // ใช้ fixtures endpoint พร้อม filter ที่ถูกต้อง
+    // SportMonks v3 ใช้ /fixtures endpoint พร้อม filter
+    const today = new Date().toISOString().split('T')[0];
+    const futureDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
     const params = {
-      include: 'participants;league;venue;round;state'
+      include: 'participants;league;venue;round;state',
+      'filter[league_id]': leagueId,
+      'filter[date_between]': `${today},${futureDate}`
     };
     
-    // ใช้ leagues/{id}/fixtures แทน
-    const endpoint = `/leagues/${leagueId}/fixtures`;
-    
     if (season) {
-      params.seasons = season;
+      params['filter[season_id]'] = season;
     }
 
-    const response = await sportMonksAPI.get(endpoint, { params });
+    const response = await sportMonksAPI.get('/fixtures', { params });
 
     const transformedData = transformFixtures(response.data.data);
     await setCache(cacheKey, transformedData, TTL.FIXTURES);
