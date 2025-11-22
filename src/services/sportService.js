@@ -443,10 +443,14 @@ export async function getFixturesByDateGroupedByLeague(date = 'today') {
 
     console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึงข้อมูลจาก SportMonks...`);
     
-    // ดึงข้อมูลแมตช์ทั้งหมดของวันนั้น
-    const response = await sportMonksAPI.get('/fixtures/date/' + date, {
+    // แปลง 'today' เป็นวันที่จริง
+    const targetDate = date === 'today' ? new Date().toISOString().split('T')[0] : date;
+    
+    // ดึงข้อมูลแมตช์ทั้งหมดของวันนั้น โดยใช้ fixtures endpoint
+    const response = await sportMonksAPI.get('/fixtures', {
       params: {
-        include: 'participants;league;venue;scores;state'
+        include: 'participants;league;venue;scores;state',
+        filters: `fixtureDate:${targetDate}`
       }
     });
 

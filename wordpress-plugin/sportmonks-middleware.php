@@ -55,6 +55,7 @@ class SportMonks_Middleware_Connector {
         add_shortcode('season_schedule', array($this, 'season_schedule_shortcode'));
         add_shortcode('team_schedule', array($this, 'team_schedule_shortcode'));
         add_shortcode('team_season_schedule', array($this, 'team_season_schedule_shortcode'));
+        add_shortcode('fixtures_by_date', array($this, 'fixtures_by_date_shortcode'));
         
         // Widgets
         add_action('widgets_init', array($this, 'register_widgets'));
@@ -399,6 +400,29 @@ class SportMonks_Middleware_Connector {
         
         ob_start();
         include SMM_PLUGIN_DIR . 'templates/schedules.php';
+        return ob_get_clean();
+    }
+    
+    /**
+     * Fixtures by Date Shortcode (แมตช์ตามวันที่ แบ่งกลุ่มตามลีก)
+     */
+    public function fixtures_by_date_shortcode($atts) {
+        $atts = shortcode_atts(array(
+            'date' => 'today' // today หรือ YYYY-MM-DD
+        ), $atts);
+        
+        $endpoint = ($atts['date'] === 'today') 
+            ? 'fixtures/today' 
+            : 'fixtures/date/' . $atts['date'];
+        
+        $data = $this->api_request($endpoint);
+        
+        if (isset($data['error'])) {
+            return '<p class="smm-error">ไม่สามารถโหลดข้อมูลได้: ' . esc_html($data['error']) . '</p>';
+        }
+        
+        ob_start();
+        include SMM_PLUGIN_DIR . 'templates/fixtures-by-date.php';
         return ob_get_clean();
     }
     
