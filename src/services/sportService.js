@@ -89,21 +89,29 @@ export async function getFixturesByLeague(leagueId, season = null) {
 
     console.log(`⚠️  Cache Miss: ${cacheKey} - กำลังดึงข้อมูลจาก SportMonks...`);
     
-    // SportMonks v3 ใช้ /fixtures endpoint พร้อม filter
-    const today = new Date().toISOString().split('T')[0];
-    const futureDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    // ตาม documentation: ใช้ fixtures endpoint โดยไม่ต้อง filter
+    // แต่ใช้ season endpoint แทน
+    const endpoint = season 
+      ? `/seasons/${season}/fixtures`
+      : `/fixtures`;
     
     const params = {
-      include: 'participants;league;venue;round;state',
-      'filter[league_id]': leagueId,
-      'filter[date_between]': `${today},${futureDate}`
+      include: 'participants;league;venue;round;state'
     };
     
-    if (season) {
-      params['filter[season_id]'] = season;
+    // ถ้าไม่มี season ให้ดึงแค่ fixtures ที่มา league นี้
+    if (!season) {
+      // ใช้ livescores แล้วกรองเอาเอง
+      const allFixtures = await sportMonksAPI.get('/livescores/inplay', { 
+        params: { include: 'participants;league;venue;round;state' }
+      });
+      
+      // กรองเฉพาะ league ที่ต้องการ
+      const filtered = allFixtures.data.data.filter(f => f.league?.id === parseInt(leagueId));
+      return filtered;
     }
 
-    const response = await sportMonksAPI.get('/fixtures', { params });
+    const response = await sportMonksAPI.get(endpoint, { params });
 
     const transformedData = transformFixtures(response.data.data);
     await setCache(cacheKey, transformedData, TTL.FIXTURES);
