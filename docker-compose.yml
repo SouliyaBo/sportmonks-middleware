@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: sportmonks-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - sportmonks-network
+
+  # Middleware API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sportmonks-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SPORTMONKS_API_KEY=${SPORTMONKS_API_KEY}
+      - SPORTMONKS_BASE_URL=${SPORTMONKS_BASE_URL}
+      - CACHE_TTL_LIVESCORES=${CACHE_TTL_LIVESCORES:-60}
+      - CACHE_TTL_FIXTURES=${CACHE_TTL_FIXTURES:-3600}
+      - CACHE_TTL_STANDINGS=${CACHE_TTL_STANDINGS:-86400}
+      - CACHE_TTL_TEAMS=${CACHE_TTL_TEAMS:-604800}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - sportmonks-network
+    volumes:
+      - ./logs:/app/logs
+
+  # Cron Service สำหรับ Pre-fetch ข้อมูล
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sportmonks-cron
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SPORTMONKS_API_KEY=${SPORTMONKS_API_KEY}
+      - SPORTMONKS_BASE_URL=${SPORTMONKS_BASE_URL}
+      - CACHE_TTL_LIVESCORES=${CACHE_TTL_LIVESCORES:-60}
+      - CACHE_TTL_FIXTURES=${CACHE_TTL_FIXTURES:-3600}
+      - CACHE_TTL_STANDINGS=${CACHE_TTL_STANDINGS:-86400}
+      - CACHE_TTL_TEAMS=${CACHE_TTL_TEAMS:-604800}
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: node src/services/cronService.js
+    networks:
+      - sportmonks-network
+    volumes:
+      - ./logs:/app/logs
+
+networks:
+  sportmonks-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
