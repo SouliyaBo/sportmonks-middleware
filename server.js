@@ -100,7 +100,7 @@ app.use((err, req, res, next) => {
 
 // ===== Start Server =====
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log('\n🚀 ========================================');
   console.log(`🟢 Server กำลังทำงานที่ http://localhost:${PORT}`);
   console.log(`🟢 Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -111,6 +111,14 @@ app.listen(PORT, () => {
 // Graceful Shutdown
 process.on('SIGTERM', () => {
   console.log('⚠️  SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('⚠️  SIGINT signal received: closing HTTP server');
   server.close(() => {
     console.log('✅ HTTP server closed');
     process.exit(0);
